@@ -86,7 +86,7 @@ public class SecurityMonitor {
 			PublishRequest publishRequest = new PublishRequest(topicArn, msg);
 			publishRequest.setSubject("Alert:List of services not having encryption in AWS - AWS Hackathon");
 			PublishResult publishResult = snsClient.publish(publishRequest);
-			
+			System.out.println(msg);
 			System.out.println("MessageId - " + publishResult.getMessageId());
 		}
 		
@@ -174,11 +174,12 @@ public class SecurityMonitor {
 		ArrayList<String> out = new ArrayList<String>();
 		List<SecurityGroup> sg=ec2Client.describeSecurityGroups(new DescribeSecurityGroupsRequest()).getSecurityGroups();
 		
-		int port, count=0;
+		int port, count=0,flag;
 		String protocol;
 		for (SecurityGroup secg:sg){
 			
 			count=0;
+			flag=0;
 			List<IpPermission> perm=secg.getIpPermissions();
 			
 			for (IpPermission i:perm){
@@ -186,13 +187,17 @@ public class SecurityMonitor {
 				if (!i.getIpProtocol().equals("-1")){
 					protocol=i.getIpProtocol();
 					port=i.getFromPort();
-					
+					System.out.println("in if");
 					if (protocol.equalsIgnoreCase("tcp") && port!=80){
 						count++;
 					}
+				}else{
+					flag=1;
+					System.out.println("in else");
+					break;
 				}
 			}
-			if (count >1){
+			if (count >1 || flag==1){
 				out.add(secg.getGroupId());
 			}
 		}
@@ -215,7 +220,7 @@ public class SecurityMonitor {
 								
 			if (isDbEncrypted == false)
 			{
-				out.add(i.getDBName());
+				out.add(i.getDBInstanceIdentifier());
 			}	
 		}
 		return out;
